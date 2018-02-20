@@ -1,6 +1,24 @@
 use lib 't';
 use Test::APIcast::Blackbox 'no_plan';
 
+sub fixture {
+    use File::Slurp;
+    use File::Spec::Functions;
+    use Cwd qw(abs_path);
+
+    my $name = filter_arguments;
+
+    if (! defined $name) {
+        bail_off("fixture filter needs argument - file to be loaded");
+    };
+
+    my $file = abs_path(catfile('t', 'fixtures', $name));
+    my $contents = read_file($file);
+
+    return $contents;
+}
+
+filters { configuration => 'fixture=echo.json' };
 
 run_tests();
 
@@ -9,16 +27,6 @@ __DATA__
 === TEST 1: underscores in headers
 HTTP headers with underscores allowed and passed upstream.
 --- configuration
-{
-  "services": [{
-    "proxy": {
-      "policy_chain": [
-        { "name": "apicast.policy.upstream",
-          "configuration": { "rules": [ { "regex": "/", "url": "http://echo" } ] } }
-      ]
-    }
-  }]
-}
 --- request
 GET /test
 --- more_headers
@@ -37,16 +45,6 @@ API_KEY: somekey
 === TEST 2 dots in headers
 Dots in headers are allowed and passed upstream.
 --- configuration
-{
-  "services": [{
-    "proxy": {
-      "policy_chain": [
-        { "name": "apicast.policy.upstream",
-          "configuration": { "rules": [ { "regex": "/", "url": "http://echo" } ] } }
-      ]
-    }
-  }]
-}
 --- request
 GET /test
 --- more_headers
